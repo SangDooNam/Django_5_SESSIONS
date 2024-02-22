@@ -1,0 +1,31 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+  {{ block.super }}
+  {% if id %}
+    <h1>To Do number {{ id }}</h1>
+    <h3>{{ todo.topic }}</h3>
+    <p>{{ todo.text }}</p>
+    <p>{{ todo.status|title }}</p>
+    <p>
+      {% if id > 1 %}
+        <a href="{% url 'todo:details' todo_id=id|add:-1 %}">Previous</a>
+      {% else %}
+        Previous
+      {% endif %}
+      {% if id < num_todos %}
+        <a href="{% url 'todo:details' todo_id=id|add:1 %}">Next</a>
+      {% else %}
+        Next
+      {% endif %}
+    </p>
+  {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <table>
+        {{ form.as_table }}
+      </table>
+      <button>Submit</button>
+    </form>
+  {% endif %}
+{% endblock %}
