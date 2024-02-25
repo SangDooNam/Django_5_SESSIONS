@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from common.views import LoginView, log_out
 
 from notes.views import redirect_to_note_detail
 # from common.views import HomeView
@@ -23,6 +24,8 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name="common/home.html"), name="home"),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', log_out, name='logout'),
     path('admin/', admin.site.urls),
     path('<int:note_id>/', redirect_to_note_detail),
     path('notes/', include("notes.urls", namespace="notes")),

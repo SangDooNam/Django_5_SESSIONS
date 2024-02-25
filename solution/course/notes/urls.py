@@ -3,7 +3,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from notes.views import (AddNoteView, NoteDetails, EditNoteView, NotesBySection,
-                         SearchView, SectionList, home)
+                         SearchView, SectionList, home, cast_vote)
 
 app_name = "notes"
 urlpatterns = [
@@ -15,4 +15,5 @@ urlpatterns = [
     path('search/', SearchView.as_view(), name="search"),
     path('add/ok', TemplateView.as_view(template_name="notes/note_added.html"), name="added_ok"),
     path('add/', AddNoteView.as_view(), name="add"),
+    path('<int:note_id>/vote/', cast_vote, name='vote'),
 ]

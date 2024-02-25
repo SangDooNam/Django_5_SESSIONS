@@ -14,6 +14,11 @@
         <li><a href="{% url 'home' %}">Home</a></li>
         <li><a href="{% url 'notes:home' %}">My Course Notes</a></li>
         <li><a href="{% url 'todo:details' todo_id=1 %}">My ToDo List</a>
+        {% if user.is_authenticated %}
+        <li> Logged in as {{ user.username }} <a href="{% url 'logout' %}">Log out</a></li>
+        {% else %}
+        <li><a href="{% url 'login' %}">Log in</a></li>
+        {% endif %} 
       </ul>
     </header>
     <section>

@@ -1,11 +1,15 @@
 """Views for the notes app."""
+from django.http.request import HttpRequest as HttpRequest
 from django.template.loader import get_template
 from django.http import HttpResponse
 from django.urls import reverse, reverse_lazy
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.mixins import LoginRequiredMixin
 
+from common.models import Notes, Votes
 from notes.models import NoteStore
 from notes.forms import SearchForm, AddNoteForm, EditNoteForm
 
@@ -108,12 +112,24 @@ class NoteDetails(TemplateView):
 
     def get_context_data(self, note_id):
         """Return the note data."""
-        return {
-            "id": note_id,
-            "num_notes": len(notes),
-            "note": notes[note_id - 1]
-        }
-
+        note = get_object_or_404(Notes, pk=note_id)
+        num_notes = Notes.objects.all().count()
+        if self.request.user.is_authenticated:
+            vote = Votes.objects.get_or_create(user_id = self.request.user.id, note_id=note.id)
+            
+            return {
+                "id": note_id,
+                "vote" : vote,
+                "num_notes": num_notes,
+                "note": note,
+            }
+        else:
+            return {
+                'id': note_id,
+                "num_notes": num_notes,
+                'note': note,
+            }
+        
 
 def _get_note_items_matching_search(search_term):
     """Return a list of items with notes marching the search."""
@@ -121,23 +137,25 @@ def _get_note_items_matching_search(search_term):
             if search_term.lower() in note["text"].lower()]
 
 
-class AddNoteView(FormView):
+class AddNoteView(LoginRequiredMixin, FormView):
     """Input a new note into the system."""
 
     template_name = "notes/add.html"
     form_class = AddNoteForm
     success_url = reverse_lazy("notes:added_ok")
 
-    def form_valid(self, *args, **kwargs):
+    def form_valid(self, form):
         """Save the note in the store."""
-        form = self.get_form()
+        if not self.request.session.get('can_write_notes', False):
+            raise PermissionDenied
+        
         note = {
-            "text": form.data.get("text", None),
-            "section": form.data.get("section", None)
+        "text": form.cleaned_data.get("text"),
+        "section": form.cleaned_data.get("section")
         }
         notes.append(note)
         store.save(notes)
-        return super().form_valid(*args, **kwargs)
+        return super().form_valid(form)
 
 
 class EditNoteView(FormView):
@@ -161,3 +179,20 @@ class EditNoteView(FormView):
         note_id = self.kwargs["note_id"]
         notes[note_id - 1]["text"] = form.data.get("text")
         return super().form_valid(form)
+
+
+def cast_vote(request, note_id):
+
+    note = get_object_or_404(Notes, pk=note_id)
+    user = request.user
+    vote = Votes.objects.get(user=request.user, note=note)
+    
+    vote.votes = True
+    vote.section = note.section
+    vote.save()
+    user.voted_notes.append(note.section)
+    user.save()
+    print(note.section)
+    print(user.username)
+    
+    return redirect(reverse('notes:details', args=[note_id]))

@@ -1,5 +1,16 @@
 {% extends 'notes/form.html' %}
 
-{% block title %}
-  Add a note
+{% block content %}
+  <form method='post'>
+    {% csrf_token %}
+    <h4>Add a note</h4>
+    {% if user.is_authenticated and request.session.can_write_notes %}
+      <table>
+        {{ form.as_table }}
+      </table>
+        <input type='submit' value='submit'>
+    {% else %}
+    <p>You are not authorized to access this content. <a href="{% url 'login' %}">Log in</a> to gain access.</p>
+    {% endif %}
+  </form>
 {% endblock %}

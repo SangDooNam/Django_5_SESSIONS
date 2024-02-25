@@ -5,6 +5,9 @@
   {{ block.super }}
   <h4>Note number {{ id }}</h4>
   <p><strong>Section:</strong> {{ note.section|linked_section|safe }}</p>
+
+    {% voting_link id %}
+
   <p>{{ note.text|safe }}</p>
   <p><a href="{% url 'notes:edit' note_id=id %}">Edit this note</a></p>
   <p>
